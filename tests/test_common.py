@@ -52,9 +52,9 @@ def test_pretty_print_board():
     assert pretty_print_board(empty_board) == test_empty_pretty_board
 
 def test_string_to_board():
-    '''
+    """
     Test if the given string representation of the board maps to the correct Board configuration
-    '''
+    """
     from agents.common import string_to_board
 
     test_board = np.array([[BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(0), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
@@ -85,13 +85,9 @@ def test_apply_player_action():
          [BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(0), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
          [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(1), BoardPiece(2), BoardPiece(1)]])
 
-    assert (apply_player_action(test_board, 3, PLAYER1, False) == np.array(
-        [[BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
-         [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(1), BoardPiece(1), BoardPiece(2), BoardPiece(1)],
-         [BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(0), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
-         [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(2), BoardPiece(2), BoardPiece(2)],
-         [BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(0), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
-         [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(1), BoardPiece(2), BoardPiece(1)]])).all()
+    test_board_modified = test_board
+    test_board_modified[1, 3] = PLAYER1
+    assert (apply_player_action(test_board, 3, PLAYER1, False) == test_board_modified).all()
 
     # test if puts a piece in empty column, in a non empty column, and if copy is true
 

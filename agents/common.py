@@ -79,21 +79,19 @@ def string_to_board(pp_board: str) -> np.ndarray:
     """
     board = np.ndarray(shape=(6, 7), dtype=BoardPiece)
     count = 0
-    #breakpoint()
+
     while pp_board[count] == '\n' or pp_board[count] == '|' or pp_board[count] == '=':
         count += 1
-    for i in reversed(range(6)):
-        #print('i for loop: ', i)
-        for j in range(7):
-            #print(board[i, j])
+    for row in reversed(range(6)):
+        for col in range(7):
             if pp_board[count] == NO_PLAYER_PRINT:
-                board[i, j] = NO_PLAYER
+                board[row, col] = NO_PLAYER
                 count += 1
             elif pp_board[count] == PLAYER1_PRINT:
-                board[i, j] = PLAYER1
+                board[row, col] = PLAYER1
                 count += 1
             elif pp_board[count] == PLAYER2_PRINT:
-                board[i, j] = PLAYER2
+                board[row, col] = PLAYER2
                 count += 1
             else:
                 count += 1    # for remaining characters
@@ -163,13 +161,24 @@ def check_end_state(board: np.ndarray, player: BoardPiece, last_action: Optional
     else:
         return GameState.IS_DRAW
 
-def avail_cols(board: np.ndarray) -> list:
-    '''
+def available_columns(board: np.ndarray) -> list:
+    """
     Takes a board as input and returns a list of all the available columns where a legitimate move can be made
-    '''
 
-    a_l = []
+    Keyword arguments:
+        board: the board that the player is playing and trying to win
+
+    Returns:
+        list: a list of the available column indices
+    """
+    columns = []
     for a in range(board.shape[1]):
         if board[-1, a].any() == NO_PLAYER:
-            a_l.append(a)
-    return a_l
+            columns.append(a)
+    return columns
+
+def opponent(player: BoardPiece) -> BoardPiece:
+
+    other_player = PLAYER_1 if player == PLAYER2 else PLAYER2
+
+    return other_player

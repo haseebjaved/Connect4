@@ -1,7 +1,7 @@
 import numpy as np
-from agents.common import PlayerAction, apply_player_action, BoardPiece, avail_cols, connected_four, check_end_state, PLAYER2, PLAYER1, NO_PLAYER, SavedState, GenMove, GameState
+from agents.common import PlayerAction, apply_player_action, BoardPiece, available_columns, opponent, connected_four, check_end_state, PLAYER2, PLAYER1, NO_PLAYER, SavedState, GenMove, GameState
 from typing import Optional, Callable, Tuple
-'''
+"""
 part A: basics
 check if any of the legal moves (open columns) will lead to a win for me or for my opponent
 if not, make a random move and check in the next iteration if any of the moves results in a win for one of us
@@ -14,12 +14,11 @@ middle of the board
 
 part C :
 use alpha beta pruning to optimize. Stop iterating if loss inevitable on certain moves? How?'''
-
+"""
 def minimax(
     board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState] = None
 ) -> Tuple[int, Optional[SavedState]]:
-
-    '''
+    """
     This function returns the best position for the agent to play by returning the appropriate column index. The
     agent checks to see if there is a win in any of the available columns, and if so, makes that move. If not, it iterates
     through every column, makes a move there, and checks whether the opposing player can win subsequently. If the opposing
@@ -33,24 +32,21 @@ def minimax(
 
     Returns:
         Tuple: consisting of the location of the column of the best move, and the Optional Saved State
-    '''
+    """
 
     danger_col = []
     columns = [0, 1, 2, 3, 4, 5, 6]
     score = 0
 
-    if player == PLAYER1:
-        other_player = PLAYER2
-    else:
-        other_player = PLAYER1
+    other_player = opponent(player)
 
-    for i in avail_cols(board):
+    for i in available_columns(board):
         board_i = apply_player_action(board, i, player, True)
         if connected_four(board_i, player) == True:
             return i, saved_state
         else:
             danger_col = []
-            for j in avail_cols(board_i):
+            for j in available_columns(board_i):
                 board_i_j = apply_player_action(board_i, j, other_player, True)
                 if connected_four(board_i_j, other_player) == True:
                     danger_col.append(j)  # these columns will lead to the opposing player's win
