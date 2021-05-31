@@ -78,20 +78,20 @@ def test_string_to_board():
 def test_apply_player_action():
     from agents.common import apply_player_action
     test_board = np.array(
-        [[BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(0), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
+        [[BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
          [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(1), BoardPiece(2), BoardPiece(1)],
          [BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(0), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
          [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(2), BoardPiece(2), BoardPiece(2)],
          [BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(0), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
-         [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(2), BoardPiece(1)]])
+         [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(1), BoardPiece(2), BoardPiece(1)]])
 
     assert (apply_player_action(test_board, 3, PLAYER1, False) == np.array(
-        [[BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(0), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
-         [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(1), BoardPiece(2), BoardPiece(1)],
+        [[BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
+         [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(1), BoardPiece(1), BoardPiece(2), BoardPiece(1)],
          [BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(0), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
          [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(2), BoardPiece(2), BoardPiece(2)],
-         [BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(1), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
-         [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(2), BoardPiece(1)]])).all()
+         [BoardPiece(2), BoardPiece(0), BoardPiece(2), BoardPiece(0), BoardPiece(1), BoardPiece(0), BoardPiece(1)],
+         [BoardPiece(1), BoardPiece(2), BoardPiece(1), BoardPiece(0), BoardPiece(1), BoardPiece(2), BoardPiece(1)]])).all()
 
     # test if puts a piece in empty column, in a non empty column, and if copy is true
 
