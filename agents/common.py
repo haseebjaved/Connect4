@@ -178,7 +178,5 @@ def available_columns(board: np.ndarray) -> list:
     return columns
 
 def opponent(player: BoardPiece) -> BoardPiece:
-
-    other_player = PLAYER_1 if player == PLAYER2 else PLAYER2
-
+    other_player = PLAYER1 if player == PLAYER2 else PLAYER2
     return other_player
