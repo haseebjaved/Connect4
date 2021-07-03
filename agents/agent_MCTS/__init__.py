@@ -1,1 +1,1 @@
-from .montecarlo import mcts
+from .montecarlo import generate_move_mcts

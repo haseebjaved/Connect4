@@ -3,6 +3,7 @@ from typing import Optional, Callable
 from agents.common import PlayerAction, BoardPiece, SavedState, GenMove
 from agents.agent_random import generate_move_random
 from agents.agent_minimax import minimax
+from agents.agent_MCTS import montecarlo
 
 def user_move(board: np.ndarray, _player: BoardPiece, saved_state: Optional[SavedState]):
     action = PlayerAction(-1)
@@ -68,4 +69,5 @@ def human_vs_agent(
 
 
 if __name__ == "__main__":
-    human_vs_agent(minimax)
+    #human_vs_agent(minimax)
+    human_vs_agent(montecarlo.generate_move_mcts)
