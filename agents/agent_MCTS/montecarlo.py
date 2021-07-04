@@ -109,31 +109,24 @@ class Tree:
         :param: parent node
         :return: True
         """
-        if node.value() != np.inf:  # node has had at least one simulation - REDUNDANT
-            avail_cols = available_columns(node.board)
-            if avail_cols is None:  # no available moves
-                print('board is full')
-                return node, player  # do i need to return None or 0 or something
-            else:
-                new_node = Node.create_child(node, avail_cols)
-                return new_node, opponent(player)
+        avail_cols = available_columns(node.board)
+        if avail_cols is None:  # no available moves
+            print('board is full')
+            return node, player  # do i need to return None or 0 or something
+        else:
+            new_node = Node.create_child(node, avail_cols)
+            return new_node, opponent(player)
 
-        else:  # if node has had no simulations yet, can't expand, must do rollout first
-            # Should an empty game tree root node run a simulation first or instead expand?
-            node.rollout(opponent(player))
-            self.update_Tree(node)
-            # should I then expand (create child) after the first simulation? Call expand recursively?
-            return True
 
     def select(self, node: Node, saved_state: Optional[SavedState] = None) \
             -> Node:  # selection needs to start from root all the way down
         """
-        Only select if all children have been created and have had at least one rollout. If not, then do rollout instead
-        Then select based on exploration vs. exploitation.
+        Only select if all children have been created and have had at least one rollout. Select based on
+        exploration vs. exploitation.
         :param node, saved_state
-        :return child node of highest UCB1 value if all children present. Otherwise create a new child
+        :return child node of highest UCB1 value if all children present. Otherwise select itself and expand in mcts()
         """
-        if len(node.children) == available_columns(node.board):  # how to check whether all possible
+        if available_columns(node.board):  # how to check whether all possible
             # children available for selection?
             values = []
             for n in node.children:
@@ -141,11 +134,8 @@ class Tree:
             ind = max(values)
             child = node.children[ind]
             return child  # value of the highest non-infinity child node
-        else:  # return self and expand in mcts()
+        else:  # return self and expand in mcts
             return node
-            # How to handle no created and available child nodes to select from?
-            # while available_columns(node.board) > 0:
-            #     keep expanding?
 
 
 def mcts(tree: Tree):
@@ -156,7 +146,7 @@ def mcts(tree: Tree):
     """
     for _ in range(1000):
         node = tree.select(tree.root)
-        test_node, test_player = tree.expand(node, node.nodePlayer)  # includes rollout and tree update
+        test_node, test_player = tree.expand(node, node.nodePlayer)
         test_node.rollout(test_player)  # rollout on opponent
         tree.update_Tree(test_node)
     return
