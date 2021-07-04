@@ -17,7 +17,8 @@ testNode.simulations = 10
 testNode.wins = 5
 testNode.parent.simulations = 50
 
-def value():
+def test_value():
     from agents.agent_MCTS import value
 
     assert value(testNode) == 1.38453637635
+

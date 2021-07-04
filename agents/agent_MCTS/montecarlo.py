@@ -144,7 +144,7 @@ def mcts(tree: Tree):
     :param tree:
     :return None
     """
-    for _ in range(100):
+    for _ in range(1000):
         node = tree.select(tree.root)
         test_node, test_player = tree.expand(node, node.nodePlayer)
         test_node.rollout(test_player)  # rollout on opponent
@@ -157,4 +157,6 @@ def generate_move_mcts(board: np.ndarray, player: BoardPiece, saved_state: Optio
     tree = Tree(board, player)
     mcts(tree)
     move = tree.root.children.index(max(tree.root.children, key=lambda c: c.simulations))
+    for c in tree.root.children:
+        print('Num of simulations: ', c.simulations, 'and Win %: ', c.wins*100/c.simulations)
     return move, None
