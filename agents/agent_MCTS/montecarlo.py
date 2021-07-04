@@ -126,14 +126,14 @@ class Tree:
         :param node, saved_state
         :return child node of highest UCB1 value if all children present. Otherwise select itself and expand in mcts()
         """
-        if available_columns(node.board):  # how to check whether all possible
-            # children available for selection?
+        if len(node.children) == len(available_columns(node.board)):
+            # how to check whether all possible children available for selection?
             values = []
             for n in node.children:
-                values.append = n.value()
+                values.append(n.value())
             ind = max(values)
-            child = node.children[ind]
-            return child  # value of the highest non-infinity child node
+            child = node.children[int(ind)]
+            return child  # value of the highest child node
         else:  # return self and expand in mcts
             return node
 
@@ -144,7 +144,7 @@ def mcts(tree: Tree):
     :param tree:
     :return None
     """
-    for _ in range(1000):
+    for _ in range(100):
         node = tree.select(tree.root)
         test_node, test_player = tree.expand(node, node.nodePlayer)
         test_node.rollout(test_player)  # rollout on opponent
@@ -156,5 +156,5 @@ def generate_move_mcts(board: np.ndarray, player: BoardPiece, saved_state: Optio
         Tuple[int, Optional[SavedState]]:
     tree = Tree(board, player)
     mcts(tree)
-    move = max(tree.root.children, key=lambda c: c.simulations)
+    move = tree.root.children.index(max(tree.root.children, key=lambda c: c.simulations))
     return move, None
