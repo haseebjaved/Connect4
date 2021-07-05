@@ -9,19 +9,29 @@ class Node:
     def __init__(self, board: np.ndarray, player: BoardPiece):  # constructor - each node is a state of the board
         self.simulations = 0  # keep track of total simulations
         self.wins = 0  # keep track of total wins, integer
-        self.win = None  # keep track of current win or loss - True or False
+        self.state = 0  # keep track of current win or loss: 1 = win, 0 = loss, 2 = draw
         self.parent = None
         self.children = []
         self.board = board
         self.nodePlayer = player  # PLAYER1 or PLAYER2
 
     def value(self, c=np.sqrt(2)) -> float:  # UCB1 algorithm
+        """
+        Determine the UCB1 value of a given Node (Board state)
+        :param c: constant used in the UCB1 algorith
+        :return: float value of the UCB1 algorithm outcome
+        """
         if self.simulations == 0:
             return np.inf
         else:
             return self.wins / self.simulations + (c * np.sqrt(np.log(self.parent.simulations) / self.simulations))
 
     def create_child(self, avail_cols: list):
+        """
+        Create a new child node during Expansion at a random column within the available moves (columns)
+        :param avail_cols:
+        :return: the new child node
+        """
         col = np.random.choice(avail_cols)
         board_copy = apply_player_action(self.board, col, self.nodePlayer, True)
         new_node = Node(board_copy, opponent(self.nodePlayer))
@@ -30,13 +40,18 @@ class Node:
         return new_node
 
     def rollout(self, player: BoardPiece) -> None:
-        # call our recursive function helper
-        player_copy = player
-        if self.rolloutHelper(self.board, player) == player_copy:
+        """
+        Call our recursive function helper to perform rollout (simulations)
+        :param player: BoardPiece
+        :return: None
+        """
+        if self.rolloutHelper(self.board, player) == player:
             self.wins += 1
-            self.win = True
+            self.state = 1  # win
+        elif self.rolloutHelper(self.board, player) == opponent(player):
+            self.state = 0  # loss
         else:
-            self.win = False
+            self.state = 2  # draw
         self.simulations += 1
         return
 
@@ -53,7 +68,7 @@ class Node:
             elif self.determineWin(board, opponent(player)):  # if loss
                 return opponent(player)
             else:  # if draw
-                return None
+                return BoardPiece(0)  # None  or opponent(player)
         else:  # generate a random move, create a new board state, apply random move
             random_move, saved_state = generate_move_random(board, player)
             random_board = apply_player_action(board, random_move, player, True)
@@ -84,7 +99,7 @@ class Node:
         elif check_end_state(board, opponent(player)) == GameState.IS_WIN:
             return False
         else:  # draw
-            return False
+            return None
 
 
 class Tree:
@@ -96,8 +111,13 @@ class Tree:
         :type node: object
         """
         while node.parent is not None:  # go back up the tree to root
-            if not node.win:  # how to check for this?
-                node.parent.wins += 1
+            if node.state == 0:  # if lost, only then parent wins
+                node.parent.wins += 1  # parent win count
+                node.parent.state = 1  # parent win indicator
+            elif node.state == 2:  # with a draw, the parent also has a draw
+                node.parent.state = 2  # indicates a draw, parent's win count stays the same
+            else:
+                node.parent.state = 0  # player won and parent lost
             node.parent.simulations += 1
             node = node.parent
         return True
@@ -144,7 +164,7 @@ def mcts(tree: Tree):
     :param tree:
     :return None
     """
-    for _ in range(1000):
+    for _ in range(20):
         node = tree.select(tree.root)
         test_node, test_player = tree.expand(node, node.nodePlayer)
         test_node.rollout(test_player)  # rollout on opponent
