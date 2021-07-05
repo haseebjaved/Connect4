@@ -60,7 +60,7 @@ class Node:
         Recursive call with opponent, determineWin() check for and return win
         :param board:
         :param player:
-        :return: player if won, otherwise
+        :return: player if won, otherwise continue the rollout with recursive call
         """
         if self.isTerminal(board, player):
             if self.determineWin(board, player):  # if win
@@ -83,7 +83,7 @@ class Node:
         :param player:
         :return: True or False
         """
-        if available_columns(board) is None or self.determineWin(board, player) or self.determineWin(board,
+        if available_columns(board) == [] or self.determineWin(board, player) or self.determineWin(board,
                                                                                                      opponent(player)):
             return True
         else:
