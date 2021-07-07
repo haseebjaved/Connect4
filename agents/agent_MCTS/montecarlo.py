@@ -164,7 +164,7 @@ def mcts(tree: Tree):
     :param tree:
     :return None
     """
-    for _ in range(20):
+    for _ in range(14):
         node = tree.select(tree.root)
         test_node, test_player = tree.expand(node, node.nodePlayer)
         test_node.rollout(test_player)  # rollout on opponent

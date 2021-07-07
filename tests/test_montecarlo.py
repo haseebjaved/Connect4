@@ -1,4 +1,4 @@
-from agents.agent_MCTS.montecarlo import Node
+from agents.agent_MCTS.montecarlo import Node, Tree
 from agents.common import *
 from agents.agent_MCTS import montecarlo
 
@@ -14,7 +14,6 @@ test_board_modified = test_board.copy()
 
 
 def test_value():
-    # from agents.agent_MCTS import montecarlo
     testNode = Node(test_board_modified, PLAYER1)
     testNode.simulations = 10
     testNode.wins = 5
@@ -60,6 +59,7 @@ def test_isTerminal():
         terminal = True
     assert terminal_node2.isTerminal(terminal_board, PLAYER2) == terminal
 
+
 def test_determineWin():
     win_1_board = np.array(
         [[BoardPiece(2), BoardPiece(1), BoardPiece(2), BoardPiece(2), BoardPiece(1), BoardPiece(1), BoardPiece(1)],
@@ -85,22 +85,60 @@ def test_determineWin():
     draw_node = Node(draw_board, PLAYER2)
     assert draw_node.determineWin(draw_board, PLAYER1) is None
 
-'''
+
 def test_rollout():
+    roll_node = Node(test_board, PLAYER1)
+    initial_simulations = roll_node.simulations
+    initial_wins = roll_node.wins
 
+    roll_node.rollout(opponent(PLAYER1))
 
-
-
-
-def test_rolloutHelper():
-
-
+    assert initial_simulations != roll_node.simulations  # after one simulation, the number is incremented and changed
+    assert initial_wins == roll_node.wins  # node did not win
+    assert roll_node.state == 2  # most likely assumption that it was a draw, is true
 
 
 
 def test_update_Tree():
+    tree = Tree(test_board_modified, PLAYER1)
+    initial_root_sims = tree.root.simulations
+    child_node = tree.root.create_child(available_columns(test_board_modified))
+    child_node.rollout(opponent(child_node.nodePlayer))
+
+    tree.update_Tree(child_node)
+
+    assert tree.root.simulations == initial_root_sims + 1  # backpropagate simulation statistics up the tree
+
+    if child_node.state == 1:  # if child wins
+        assert tree.root.state == 0  # parent lost
+    elif child_node.state == 0:  # if child lost
+        assert tree.root.state == 1  # parent won
+    else:  # if draw for child
+        assert tree.root.state == 2  # draw for parent as well
+
 
 def test_expand():
+    tree = Tree(test_board_modified, PLAYER1)
+    initial_children_length = len(tree.root.children)
+    child_node, child_player = tree.expand(tree.root, tree.root.nodePlayer)  # add one child to the root node
+
+    assert len(tree.root.children) == initial_children_length + 1  # list of children is increased by one
+
 
 def test_select():
-'''
+    zero_board = np.zeros_like(test_board)
+    tree = Tree(zero_board, PLAYER1)
+
+    #for i in range(len(available_columns(tree.root.board))):  # create all children to select from
+    for i in range(20):
+        child_node, child_player = tree.expand(tree.root, tree.root.nodePlayer)
+        child_node.rollout(opponent(child_player))  # rollout on opponent
+        tree.update_Tree(child_node)
+
+        if i == 4:
+            assert tree.select(tree.root) == tree.root  # if all children not created and available, return self
+
+    assert tree.select(tree.root) == tree.root.children[0]  # why is it still choosing itself?
+
+
+
