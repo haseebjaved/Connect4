@@ -164,7 +164,7 @@ def mcts(tree: Tree):
     :param tree:
     :return None
     """
-    for _ in range(14):
+    for _ in range(2000):  # takes 20 secs to run 3000 iter, 10 secs for 2000 iter
         node = tree.select(tree.root)
         test_node, test_player = tree.expand(node, node.nodePlayer)
         test_node.rollout(test_player)  # rollout on opponent
@@ -176,6 +176,8 @@ def generate_move_mcts(board: np.ndarray, player: BoardPiece, saved_state: Optio
         Tuple[int, Optional[SavedState]]:
     tree = Tree(board, player)
     mcts(tree)
+    # choose the child with most simulations instead of win percentage because could have a child with just 1
+    # simulation and 1 win for a win percentage of 100% but a different child with 1000 iterations and 600 wins for 60%
     move = tree.root.children.index(max(tree.root.children, key=lambda c: c.simulations))
     for c in tree.root.children:
         print('Num of simulations: ', c.simulations, 'and Win %: ', c.wins*100/c.simulations)

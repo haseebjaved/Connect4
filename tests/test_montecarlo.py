@@ -129,16 +129,17 @@ def test_select():
     zero_board = np.zeros_like(test_board)
     tree = Tree(zero_board, PLAYER1)
 
-    #for i in range(len(available_columns(tree.root.board))):  # create all children to select from
-    for i in range(20):
+    for i in range(len(available_columns(tree.root.board))):  # create all children to select from
+    #for i in range(20):
         child_node, child_player = tree.expand(tree.root, tree.root.nodePlayer)
         child_node.rollout(opponent(child_player))  # rollout on opponent
         tree.update_Tree(child_node)
 
-        if i == 4:
+        if len(available_columns(tree.root.board)) == 7 and i == 4:
             assert tree.select(tree.root) == tree.root  # if all children not created and available, return self
+    print(tree.root)
 
-    assert tree.select(tree.root) == tree.root.children[0]  # why is it still choosing itself?
+    assert tree.select(tree.root) == tree.root.children[2]  # why is it still choosing itself?
 
 
 

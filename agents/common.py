@@ -18,6 +18,7 @@ PlayerAction = np.int8  # The column to be played
 
 from typing import Callable, Tuple
 
+
 class SavedState:
     pass
 
@@ -27,10 +28,12 @@ GenMove = Callable[
     Tuple[PlayerAction, Optional[SavedState]]  # Return type of the generate_move function
 ]
 
+
 class GameState(Enum):
     IS_WIN = 1
     IS_DRAW = -1
     STILL_PLAYING = 0
+
 
 def initialize_game_state() -> np.ndarray:
     """
@@ -58,7 +61,7 @@ def pretty_print_board(board: np.ndarray) -> str:
     |0 1 2 3 4 5 6 |
     """
     print_board = '|=======|'
-    for i in range(board.shape[0]-1, -1, -1):
+    for i in range(board.shape[0] - 1, -1, -1):
         print_board += '\n|'
         for j in range(board.shape[1]):
             if board[i, j] == BoardPiece(1):
@@ -70,6 +73,7 @@ def pretty_print_board(board: np.ndarray) -> str:
         print_board += '|'
     print_board += '\n|=======|\n|0123456|'
     return print_board
+
 
 def string_to_board(pp_board: str) -> np.ndarray:
     """
@@ -94,8 +98,9 @@ def string_to_board(pp_board: str) -> np.ndarray:
                 board[row, col] = PLAYER2
                 count += 1
             else:
-                count += 1    # for remaining characters
+                count += 1  # for remaining characters
     return board
+
 
 def apply_player_action(board: np.ndarray, action: PlayerAction, player: BoardPiece, copy: bool = False) -> np.ndarray:
     """
@@ -114,6 +119,7 @@ def apply_player_action(board: np.ndarray, action: PlayerAction, player: BoardPi
         board[i, action] = player
         return board
 
+
 def connected_four(board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None) -> bool:
     """
     Returns True if there are four adjacent pieces equal to `player` arranged
@@ -124,30 +130,31 @@ def connected_four(board: np.ndarray, player: BoardPiece, last_action: Optional[
     # check horizontal win
     for i in range(6):
         for j in range(4):
-            if board[i,j] == board[i,j+1] == board[i,j+2] == board[i,j+3] == player:
+            if board[i, j] == board[i, j + 1] == board[i, j + 2] == board[i, j + 3] == player:
                 return True
 
     # check vertical win
     for i in range(3):
         for j in range(7):
-            if board[i,j] == board[i+1,j] == board[i+2,j] == board[i+3,j] == player:
+            if board[i, j] == board[i + 1, j] == board[i + 2, j] == board[i + 3, j] == player:
                 return True
 
     # check / diagonal
     for i in reversed(range(3)):
         for j in range(4):
-            if board[i, j] == board[i+1, j+1] == board[i+2, j+2] == board[i+3, j+3] == player:
+            if board[i, j] == board[i + 1, j + 1] == board[i + 2, j + 2] == board[i + 3, j + 3] == player:
                 return True
 
     # check \ diagonal
-    for i in range(3,6):
+    for i in range(3, 6):
         for j in range(4):
-            if board[i,j] == board[i-1,j+1] == board[i-2,j+2] == board[i-3,j+3] == player:
+            if board[i, j] == board[i - 1, j + 1] == board[i - 2, j + 2] == board[i - 3, j + 3] == player:
                 return True
 
     return False
 
-def check_end_state(board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None,) -> GameState:
+
+def check_end_state(board: np.ndarray, player: BoardPiece, last_action: Optional[PlayerAction] = None, ) -> GameState:
     """
     Returns the current game state for the current `player`, i.e. has their last
     action won (GameState.IS_WIN) or drawn (GameState.IS_DRAW) the game,
@@ -160,6 +167,7 @@ def check_end_state(board: np.ndarray, player: BoardPiece, last_action: Optional
         return GameState.STILL_PLAYING
     else:
         return GameState.IS_DRAW
+
 
 def available_columns(board: np.ndarray) -> list:
     """
@@ -176,6 +184,7 @@ def available_columns(board: np.ndarray) -> list:
         if board[-1, a].any() == NO_PLAYER:
             columns.append(a)
     return columns
+
 
 def opponent(player: BoardPiece) -> BoardPiece:
     other_player = PLAYER1 if player == PLAYER2 else PLAYER2
