@@ -180,12 +180,17 @@ def available_columns(board: np.ndarray) -> list:
         list: a list of the available column indices
     """
     columns = []
-    for a in range(board.shape[1]):
-        if board[-1, a].any() == NO_PLAYER:
-            columns.append(a)
+    for col in range(board.shape[1]):
+        if board[-1, col].any() == NO_PLAYER:
+            columns.append(col)
     return columns
 
 
 def opponent(player: BoardPiece) -> BoardPiece:
+    """
+    Given a player, return their opponent
+    :param player: BoardPiece
+    :return: BoardPiece
+    """
     other_player = PLAYER1 if player == PLAYER2 else PLAYER2
     return other_player

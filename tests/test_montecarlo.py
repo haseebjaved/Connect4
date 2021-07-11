@@ -13,14 +13,25 @@ test_board = np.array(
 test_board_modified = test_board.copy()
 
 
+def test_wins():
+    tree = Tree(test_board_modified, PLAYER1)
+    new_node = Node(tree.root.board, PLAYER1)
+    initial_wins = new_node.wins()
+    for i in range(100):
+        winner = new_node.rollout(new_node.board, opponent(new_node.nodePlayer))
+        tree.update_Tree(new_node, winner)
+
+    assert new_node.wins() != initial_wins  # expecting at least 1 win in 100 rollouts
+
+
 def test_value():
     testNode = Node(test_board_modified, PLAYER1)
     testNode.simulations = 10
-    testNode.wins = 5
+    testNode.rolloutResults[testNode.nodePlayer] = 5  # 5 wins for Player1
     test_board_modified[3, 0] = NO_PLAYER
     testNode.parent = Node(test_board_modified, PLAYER2)
     testNode.parent.simulations = 50
-    assert montecarlo.Node.value(testNode) == 1.3845363763495708
+    assert montecarlo.Node.value(testNode) == 1.3845363763495708  # applying the UCB1 formula
 
 
 def test_create_child():
@@ -87,34 +98,32 @@ def test_determineWin():
 
 
 def test_rollout():
-    roll_node = Node(test_board, PLAYER1)
+    tree = Tree(test_board_modified, PLAYER1)
+    roll_node = Node(tree.root.board, PLAYER1)
     initial_simulations = roll_node.simulations
-    initial_wins = roll_node.wins
+    initial_wins = roll_node.wins()  # wins of the node's player
 
-    roll_node.rollout(opponent(PLAYER1))
+    winner = roll_node.rollout(roll_node.board, opponent(roll_node.nodePlayer))
+    tree.update_Tree(roll_node, winner)
 
-    assert initial_simulations != roll_node.simulations  # after one simulation, the number is incremented and changed
-    assert initial_wins == roll_node.wins  # node did not win
-    assert roll_node.state == 2  # most likely assumption that it was a draw, is true
-
+    assert initial_simulations != roll_node.simulations  # rollout caused an increase in simulations
+    assert initial_wins == roll_node.wins() or roll_node.wins()+1  # either node won or did not win - Random moves
 
 
 def test_update_Tree():
     tree = Tree(test_board_modified, PLAYER1)
     initial_root_sims = tree.root.simulations
     child_node = tree.root.create_child(available_columns(test_board_modified))
-    child_node.rollout(opponent(child_node.nodePlayer))
+    winner = child_node.rollout(child_node.board, opponent(child_node.nodePlayer))
 
-    tree.update_Tree(child_node)
+    tree.update_Tree(child_node, winner)
 
-    assert tree.root.simulations == initial_root_sims + 1  # backpropagate simulation statistics up the tree
+    assert tree.root.simulations == initial_root_sims + 1  # after one rollout, simulations increase by 1
 
-    if child_node.state == 1:  # if child wins
-        assert tree.root.state == 0  # parent lost
-    elif child_node.state == 0:  # if child lost
-        assert tree.root.state == 1  # parent won
-    else:  # if draw for child
-        assert tree.root.state == 2  # draw for parent as well
+    if child_node.wins() == 1:  # if child wins
+        assert tree.root.wins() == 0  # parent lost
+    else:  # if child did not win
+        assert tree.root.wins() == 1 or tree.root.wins() == 0  # parent won or game drawn
 
 
 def test_expand():
@@ -127,18 +136,22 @@ def test_expand():
 
 def test_select():
     zero_board = np.zeros_like(test_board)
-    tree = Tree(zero_board, PLAYER1)
+    tree = Tree(zero_board, PLAYER1)  # create an empty board, i.e. new game
 
     for i in range(len(available_columns(tree.root.board))):  # create all children to select from
         child_node, child_player = tree.expand(tree.root, tree.root.nodePlayer)
-        child_node.rollout(opponent(child_player))  # rollout on opponent
-        tree.update_Tree(child_node)
+        winner = child_node.rollout(child_node.board, child_player)  # rollout on opponent which is returned by expand()
+        tree.update_Tree(child_node, winner)
 
         if len(available_columns(tree.root.board)) == 7 and i == 1:
-            assert tree.select(tree.root) == tree.root  # if all children not created but available, return self
-    print(tree.root)
+            assert tree.select(tree.root) == tree.root  # if all possible children not created, return self
 
-    assert tree.select(tree.root) == tree.root.children[1]  # why is it choosing this child and failing on others?
+    scores = []
+    for c in tree.root.children:
+        scores.append(c.value())
+    ind = np.argmax(scores)
+    child = tree.root.children[ind]
+    assert tree.select(tree.root) == child  # select child with max UCB1 score
 
 
 

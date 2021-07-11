@@ -8,12 +8,17 @@ from typing import Optional, Callable, Tuple
 class Node:
     def __init__(self, board: np.ndarray, player: BoardPiece):  # constructor - each node is a state of the board
         self.simulations = 0  # keep track of total simulations
-        self.wins = 0  # keep track of total wins, integer
-        self.state = 0  # keep track of current win or loss: 1 = win, 0 = loss, 2 = draw
+        self.rolloutResults = {PLAYER1: 0, PLAYER2: 0, NO_PLAYER: 0}
         self.parent = None
         self.children = []
         self.board = board
         self.nodePlayer = player  # PLAYER1 or PLAYER2
+
+    def wins(self) -> int:
+        """
+        :return: number of wins of the Node's player
+        """
+        return self.rolloutResults[self.nodePlayer]
 
     def value(self, c=np.sqrt(2)) -> float:  # UCB1 algorithm
         """
@@ -24,7 +29,7 @@ class Node:
         if self.simulations == 0:
             return np.inf
         else:
-            return self.wins / self.simulations + (c * np.sqrt(np.log(self.parent.simulations) / self.simulations))
+            return self.wins() / self.simulations + (c * np.sqrt(np.log(self.parent.simulations) / self.simulations))
 
     def create_child(self, avail_cols: list):
         """
@@ -39,23 +44,7 @@ class Node:
         self.children.append(new_node)
         return new_node
 
-    def rollout(self, player: BoardPiece) -> None:
-        """
-        Call our recursive function helper to perform rollout (simulations)
-        :param player: BoardPiece
-        :return: None
-        """
-        if self.rolloutHelper(self.board, player) == player:
-            self.wins += 1
-            self.state = 1  # win
-        elif self.rolloutHelper(self.board, player) == opponent(player):
-            self.state = 0  # loss
-        else:
-            self.state = 2  # draw
-        self.simulations += 1
-        return
-
-    def rolloutHelper(self, board: np.ndarray, player: BoardPiece) -> BoardPiece:
+    def rollout(self, board: np.ndarray, player: BoardPiece) -> BoardPiece:
         """
         Recursive call with opponent, determineWin() check for and return win
         :param board:
@@ -68,11 +57,11 @@ class Node:
             elif self.determineWin(board, opponent(player)):  # if loss
                 return opponent(player)
             else:  # if draw
-                return BoardPiece(0)  # None  or opponent(player)
+                return BoardPiece(0)  # None
         else:  # generate a random move, create a new board state, apply random move
             random_move, saved_state = generate_move_random(board, player)
             random_board = apply_player_action(board, random_move, player, True)
-            self.rolloutHelper(random_board, opponent(player))  # recursive call, passing in new board & opponent
+            return self.rollout(random_board, opponent(player))  # recursive call, passing in new board & opponent
 
     def isTerminal(self, board: np.ndarray, player: BoardPiece) -> bool:
         """
@@ -84,7 +73,7 @@ class Node:
         :return: True or False
         """
         if available_columns(board) == [] or self.determineWin(board, player) or self.determineWin(board,
-                                                                                                     opponent(player)):
+                                                                                                   opponent(player)):
             return True
         else:
             return False
@@ -106,55 +95,48 @@ class Tree:
     def __init__(self, board: np.ndarray, player: BoardPiece):  # constructor
         self.root = Node(board, player)
 
-    def update_Tree(self, node: Node) -> bool:
+    def update_Tree(self, node: Node, winner: BoardPiece):
         """
-        :type node: object
+        Backpropagate the results of a rollout up the tree to the root node
+        :param winner: BoardPiece
+        :param node: Node
         """
-        while node.parent is not None:  # go back up the tree to root
-            if node.state == 0:  # if lost, only then parent wins
-                node.parent.wins += 1  # parent win count
-                node.parent.state = 1  # parent win indicator
-            elif node.state == 2:  # with a draw, the parent also has a draw
-                node.parent.state = 2  # indicates a draw, parent's win count stays the same
-            else:
-                node.parent.state = 0  # player won and parent lost
-            node.parent.simulations += 1
+        while node is not None:
+            node.rolloutResults[winner] += 1
+            node.simulations += 1
             node = node.parent
-        return True
 
     def expand(self, node: Node, player: BoardPiece) -> Tuple[Node, BoardPiece]:  # insert node
         """
-        Create one child node at a time, run a simulation/rollout, and back propagate the results.
-        Expand from a node (make it a parent) only when it has had at least one simulation
+        Create one child node of the given node. If no more children left to create, return self.
         :param: parent node
         :return: True
         """
         avail_cols = available_columns(node.board)
         if avail_cols is None:  # no available moves
             print('board is full')
-            return node, player  # do i need to return None or 0 or something
+            return node, player  # return self
         else:
             new_node = Node.create_child(node, avail_cols)
-            return new_node, opponent(player)
-
+            return new_node, opponent(player)  # child node has board with opponent's turn to play
 
     def select(self, node: Node, saved_state: Optional[SavedState] = None) \
             -> Node:  # selection needs to start from root all the way down
         """
         Only select if all children have been created and have had at least one rollout. Select based on
         exploration vs. exploitation.
-        :param node, saved_state
+        :param saved_state:
+        :param node:
         :return child node of highest UCB1 value if all children present. Otherwise select itself and expand in mcts()
         """
         if len(node.children) == len(available_columns(node.board)):
-            # how to check whether all possible children available for selection?
             values = []
             for n in node.children:
                 values.append(n.value())
-            ind = max(values)
-            child = node.children[int(ind)]
+            ind = np.argmax(values)
+            child = node.children[ind]
             return child  # value of the highest child node
-        else:  # return self and expand in mcts
+        else:  # return self and expand in mcts()
             return node
 
 
@@ -164,21 +146,27 @@ def mcts(tree: Tree):
     :param tree:
     :return None
     """
-    for _ in range(2000):  # takes 20 secs to run 3000 iter, 10 secs for 2000 iter
+    for _ in range(3000):
         node = tree.select(tree.root)
         test_node, test_player = tree.expand(node, node.nodePlayer)
-        test_node.rollout(test_player)  # rollout on opponent
-        tree.update_Tree(test_node)
+        winner = test_node.rollout(test_node.board, opponent(test_player))  # rollout on opponent
+        tree.update_Tree(test_node, winner)
     return
 
 
 def generate_move_mcts(board: np.ndarray, player: BoardPiece, saved_state: Optional[SavedState] = None) -> \
         Tuple[int, Optional[SavedState]]:
+    """
+    Choose the child with most simulations instead of win percentage because could have a child with just 1
+    simulation and 1 win for a win percentage of 100% but a different child with 1000 iterations and 600 wins for 60%
+    :param board:
+    :param player:
+    :param saved_state:
+    :return: Tuple with next move (column)
+    """
     tree = Tree(board, player)
     mcts(tree)
-    # choose the child with most simulations instead of win percentage because could have a child with just 1
-    # simulation and 1 win for a win percentage of 100% but a different child with 1000 iterations and 600 wins for 60%
     move = tree.root.children.index(max(tree.root.children, key=lambda c: c.simulations))
     for c in tree.root.children:
-        print('Num of simulations: ', c.simulations, 'and Win %: ', c.wins*100/c.simulations)
+        print('Num of simulations: ', c.simulations, 'and Win %: ', c.wins() * 100 / c.simulations)
     return move, None

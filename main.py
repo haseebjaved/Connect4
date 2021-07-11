@@ -69,5 +69,4 @@ def human_vs_agent(
 
 
 if __name__ == "__main__":
-    #human_vs_agent(minimax)
     human_vs_agent(montecarlo.generate_move_mcts)
